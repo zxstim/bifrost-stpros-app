@@ -3,6 +3,7 @@ export interface Token {
   symbol: string;
   decimals: number;
   network: string;
+  networkId: number;
   address: string;
   image: string;
 }

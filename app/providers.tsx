@@ -15,7 +15,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 const { wallets } = getDefaultWallets();
 
 const config = getDefaultConfig({
-  appName: "Bifrost SLPX App", // Name your app
+  appName: "Bifrost vETH App", // Name your app
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!, // Enter your WalletConnect Project ID here
   wallets: [
     {

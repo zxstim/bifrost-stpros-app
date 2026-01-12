@@ -28,7 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { parseEther, formatEther, Address, erc20Abi } from "viem";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { roundLongDecimals } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCcw } from "lucide-react";
 import { TransactionStatus } from "@/components/transaction-status";
 import { vethAbi } from "@/lib/abis";
 
@@ -51,19 +51,25 @@ export default function MintComponent() {
   });
 
   const {
-    data: tokenBalances,
-    isLoading: isLoadingTokenBalances,
-    isRefetching: isRefetchingTokenBalances,
-    refetch: refetchTokenBalances,
+    data: vethData,
+    isLoading: isLoadingVethData,
+    isRefetching: isRefetchingVethData,
+    refetch: refetchVethData,
   } = useReadContracts({
     contracts: [
       // vETH
       {
         abi: erc20Abi,
-        address: TOKEN_LIST.filter((token) => token.symbol === "vETH")[0]
-          .address as Address,
+        address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
         functionName: "balanceOf",
         args: [address as Address],
+      },
+      // Exchange rate
+      {
+        abi: vethAbi,
+        address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
+        functionName: "convertToShares",
+        args: [parseEther("1")],
       },
     ],
   });
@@ -87,6 +93,26 @@ export default function MintComponent() {
     },
   });
 
+  function convertChainIdToName(chainId: number) {
+    switch (chainId) {
+      case 1:
+        return "Ethereum";
+      case 10:
+        return "Optimism";
+      case 8453:
+        return "Base";
+      case 42161:
+        return "Arbitrum";
+      default:
+        return "Unknown";
+    }
+  }
+
+  function refetchAllData() {
+    refetchNativeBalance();
+    refetchVethData();
+  }
+
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({
       hash,
@@ -95,7 +121,22 @@ export default function MintComponent() {
   return (
     <div className="flex flex-col gap-4 w-full p-4 border-2 border-primary rounded-none">
       <div className="flex flex-col gap-2 pb-8">
-        <h1 className="text-2xl font-bold">Portfolio</h1>
+        <div className="flex flex-row gap-2 items-center justify-between">
+        <h1 className="text-2xl font-bold">Stake ETH for vETH</h1>
+        <Button
+            className="hover:cursor-pointer"
+            size="icon"
+            variant="ghost"
+            onClick={refetchAllData}
+            disabled={isRefetchingNativeBalance || isRefetchingVethData}
+          >
+            {isRefetchingNativeBalance || isRefetchingVethData ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCcw className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
         <div className="flex flex-col gap-2">
           <div className="flex flex-row gap-2 items-center justify-between">
             <div className="flex flex-row gap-2 items-center justify-center">
@@ -103,7 +144,13 @@ export default function MintComponent() {
               <div className="flex flex-col gap-2">
                 <div className="flex flex-row gap-2 items-center justify-center">
                   <p className="text-lg">ETH</p>
-                  <p className="text-muted-foreground">Mainnet</p>
+                  {chainId ? (
+                    <p className="border border-muted-foreground bg-muted-foreground/10 rounded-none px-2 py-0.5 text-muted-foreground text-sm">
+                      {convertChainIdToName(chainId)}
+                    </p>
+                  ) : (
+                    <Skeleton className="w-12 h-4" />
+                  )}
                 </div>
               </div>
             </div>
@@ -119,20 +166,23 @@ export default function MintComponent() {
               <div className="flex flex-col gap-2">
                 <div className="flex flex-row gap-2 items-center justify-center">
                   <p className="text-lg">vETH</p>
-                  <p className="text-muted-foreground">Mainnet</p>
+                  {chainId ? (
+                    <p className="border border-muted-foreground bg-muted-foreground/10 rounded-none px-2 py-0.5 text-muted-foreground text-sm">
+                      {convertChainIdToName(chainId)}
+                    </p>
+                  ) : (
+                    <Skeleton className="w-12 h-4" />
+                  )}
                 </div>
               </div>
             </div>
-            {isLoadingTokenBalances ? (
+            {isLoadingVethData ? (
               <Skeleton className="w-12 h-4" />
             ) : (
-              <p>{formatEther(tokenBalances?.[0]?.result ?? BigInt(0))}</p>
+              <p>{formatEther(vethData?.[0]?.result ?? BigInt(0))}</p>
             )}
           </div>
         </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">Stake ETH for vETH</h1>
       </div>
       <form
         onSubmit={(e) => {
@@ -142,7 +192,7 @@ export default function MintComponent() {
         }}
       >
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2 rounded-lg border p-4">
+          <div className="flex flex-col gap-2 rounded-none border border-muted-foreground p-4">
             <div>
               {/* A type-safe field component*/}
               <form.Field
@@ -156,7 +206,7 @@ export default function MintComponent() {
                       : parseEther(value) >
                         (selectedToken?.symbol === "vETH"
                           ? nativeBalance?.value ?? BigInt(0)
-                          : tokenBalances?.[0]?.result ?? BigInt(0))
+                          : vethData?.[0]?.result ?? BigInt(0))
                       ? "Amount must be less than or equal to your balance"
                       : undefined,
                 }}
@@ -165,7 +215,10 @@ export default function MintComponent() {
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2 items-center justify-between">
                       <p className="text-muted-foreground">You stake</p>
-                      <button className="bg-transparent border border-muted-foreground text-muted-foreground rounded-md px-2 py-0.5 hover:cursor-pointer">
+                      <button
+                        type="button"
+                        className="bg-transparent rounded-none border border-muted-foreground text-muted-foreground rounded-md px-2 py-0.5 hover:cursor-pointer"
+                      >
                         Max
                       </button>
                     </div>
@@ -205,13 +258,43 @@ export default function MintComponent() {
               </form.Field>
             </div>
           </div>
+          <div className="flex flex-col gap-2 rounded-none border border-muted-foreground p-4">
+            <div className="flex flex-row gap-2 items-center justify-between">
+              <p className="text-muted-foreground">You receive</p>
+            </div>
+            <div className="flex flex-row gap-2">
+              <input
+                id="receivingAmount"
+                name="receivingAmount"
+                value="0"
+                className="bg-transparent text-4xl outline-none w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                type="number"
+                placeholder="0"
+                readOnly
+              />
+              <p className="place-self-end text-lg text-muted-foreground">
+                vETH
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row gap-2 items-center text-muted-foreground">
+              1 ETH ={" "}
+              {isLoadingVethData ? (
+                <Skeleton className="w-12 h-4" />
+              ) : (
+                formatEther((vethData?.[1]?.result as bigint) ?? BigInt(0))
+              )}{" "}
+              vETH
+            </div>
+          </div>
           <form.Subscribe
             selector={(state) => [state.canSubmit, state.isSubmitting]}
           >
             {([canSubmit, isSubmitting]) => (
               <Button
                 size="lg"
-                className="hover:cursor-pointer text-lg font-bold"
+                className="hover:cursor-pointer text-lg font-bold rounded-none"
                 type="submit"
                 disabled={!canSubmit || isSubmitting || isPending}
               >
@@ -221,7 +304,7 @@ export default function MintComponent() {
                     Please confirm in wallet
                   </>
                 ) : (
-                  <>Mint</>
+                  <>Stake</>
                 )}
               </Button>
             )}
