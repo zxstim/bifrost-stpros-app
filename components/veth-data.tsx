@@ -4,14 +4,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { formatCurrencyValue } from "@/lib/utils";
 
-export default function VethOnchainInfo() {
+export default function VethData() {
   // Queries
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["veth-onchain-info"],
+    queryKey: ["veth-data"],
     queryFn: async () => {
       const response = await fetch("https://dapi.bifrost.io/api/site");
       if (!response.ok) {
-        throw new Error("Failed to fetch vETH onchain info");
+        throw new Error("Failed to fetch vETH data");
       }
       return response.json();
     },

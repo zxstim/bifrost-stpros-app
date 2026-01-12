@@ -1,5 +1,5 @@
 import MintComponent from "@/components/mint-component";
-import VethOnchainInfo from "@/components/veth-onchain-info";
+import VethData from "@/components/veth-data";
 
 export default function Home() {
   return (
@@ -17,7 +17,7 @@ export default function Home() {
             Secure the Ethereum network and earn optimized staking rewards by
             minting vETH. Permissionlessly crosschain.
           </p>
-          <VethOnchainInfo />
+          <VethData />
         </div>
         <MintComponent />
       </div>
