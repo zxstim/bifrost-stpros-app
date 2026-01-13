@@ -1,5 +1,4 @@
 import MintComponent from "@/components/mint-component";
-import VethData from "@/components/veth-data";
 
 export default function Home() {
   return (
@@ -9,15 +8,14 @@ export default function Home() {
           <p className="border-2 border-primary rounded-none px-2 py-1 w-fit">
             INSTITUTIONAL GRADE
           </p>
-          <h1 className="scroll-m-20 text-7xl font-extrabold tracking-loose text-balance">
-            Crosschain Liquid Staking for <br />{" "}
-            <span className="underline underline-offset-4">Ethereum</span>
+          <h1 className="scroll-m-20 text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-loose text-balance">
+            Professional Liquid Staking for <br />{" "}
+            <span className="underline underline-offset-4">Pharos</span>
           </h1>
-          <p className="text-muted-foreground text-2xl">
-            Secure the Ethereum network and earn optimized staking rewards by
-            minting vETH. Permissionlessly crosschain.
+          <p className="text-muted-foreground text-lg md:text-xl lg:text-2xl">
+            Secure Pharos network and earn optimized staking rewards by
+            minting stPROS.
           </p>
-          <VethData />
         </div>
         <MintComponent />
       </div>

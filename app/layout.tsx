@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Bifrost SLPX App",
     description: "A app to interact with Bifrost SLPX protocol",
-    url: "https://slpx.zxstim.com",
+    url: "https://stpros.zxstim.com",
     siteName: "Bifrost SLPX App",
     images: [
       {
