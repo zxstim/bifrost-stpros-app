@@ -19,7 +19,7 @@ import { parseEther, formatEther, Address, erc20Abi } from "viem";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Loader2, RefreshCcw } from "lucide-react";
 import { TransactionStatus } from "@/components/transaction-status";
-import { vethAbi } from "@/lib/abis";
+import { stProsAbi } from "@/lib/abis";
 
 export default function MintComponent() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -44,17 +44,17 @@ export default function MintComponent() {
     refetch: refetchVethData,
   } = useReadContracts({
     contracts: [
-      // vETH
+      // stPROS
       {
         abi: erc20Abi,
-        address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
+        address: "0xc9A0B63d91c2A808dD631d031f037944fedDaA12",
         functionName: "balanceOf",
         args: [address as Address],
       },
       // Exchange rate
       {
-        abi: vethAbi,
-        address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
+        abi: stProsAbi,
+        address: "0xc9A0B63d91c2A808dD631d031f037944fedDaA12",
         functionName: "convertToShares",
         args: [parseEther("1")],
       },
@@ -69,28 +69,13 @@ export default function MintComponent() {
     },
     onSubmit: async ({ value }) => {
       writeContract({
-        address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
-        abi: vethAbi,
-        functionName: "depositWithETH",
+        address: "0xc9A0B63d91c2A808dD631d031f037944fedDaA12",
+        abi: stProsAbi,
+        functionName: "depositWithPROS",
         value: parseEther(value.amount),
       });
     },
   });
-
-  function convertChainIdToName(chainId: number) {
-    switch (chainId) {
-      case 1:
-        return "Ethereum";
-      case 10:
-        return "Optimism";
-      case 8453:
-        return "Base";
-      case 42161:
-        return "Arbitrum";
-      default:
-        return "Unknown";
-    }
-  }
 
   function refetchAllData() {
     refetchNativeBalance();
@@ -106,7 +91,7 @@ export default function MintComponent() {
     <div className="flex flex-col gap-4 w-full p-4 border-2 border-primary rounded-none">
       <div className="flex flex-col gap-2 pb-8">
         <div className="flex flex-row gap-2 items-center justify-between">
-          <h1 className="text-2xl font-bold">Stake ETH for vETH</h1>
+          <h1 className="text-2xl font-bold">Stake PHRS for stPROS</h1>
           <Button
             className="hover:cursor-pointer"
             size="icon"
@@ -124,17 +109,10 @@ export default function MintComponent() {
         <div className="flex flex-col gap-2">
           <div className="flex flex-row gap-2 items-center justify-between">
             <div className="flex flex-row gap-2 items-center justify-center">
-              <Image src="/eth.svg" alt="ETH" width={24} height={24} />
+              {/* <Image src="/PHRS.svg" alt="PHRS" width={24} height={24} /> */}
               <div className="flex flex-col gap-2">
                 <div className="flex flex-row gap-2 items-center justify-center">
-                  <p className="text-lg">ETH</p>
-                  {chainId ? (
-                    <p className="border border-muted-foreground bg-muted-foreground/10 rounded-none px-2 py-0.5 text-muted-foreground text-sm">
-                      {convertChainIdToName(chainId)}
-                    </p>
-                  ) : (
-                    <Skeleton className="w-12 h-4" />
-                  )}
+                  <p className="text-lg">PHRS</p>
                 </div>
               </div>
             </div>
@@ -146,17 +124,10 @@ export default function MintComponent() {
           </div>
           <div className="flex flex-row gap-2 items-center justify-between">
             <div className="flex flex-row gap-2 items-center justify-center">
-              <Image src="/veth.svg" alt="vETH" width={24} height={24} />
+              {/* <Image src="/stPROS.svg" alt="stPROS" width={24} height={24} /> */}
               <div className="flex flex-col gap-2">
                 <div className="flex flex-row gap-2 items-center justify-center">
-                  <p className="text-lg">vETH</p>
-                  {chainId ? (
-                    <p className="border border-muted-foreground bg-muted-foreground/10 rounded-none px-2 py-0.5 text-muted-foreground text-sm">
-                      {convertChainIdToName(chainId)}
-                    </p>
-                  ) : (
-                    <Skeleton className="w-12 h-4" />
-                  )}
+                  <p className="text-lg">stPROS</p>
                 </div>
               </div>
             </div>
@@ -230,7 +201,7 @@ export default function MintComponent() {
                         />
                       )}
                       <p className="place-self-end text-lg text-muted-foreground">
-                        ETH
+                        PHRS
                       </p>
                     </div>
                     <FieldInfo field={field} />
@@ -264,7 +235,7 @@ export default function MintComponent() {
                       readOnly
                     />
                     <p className="place-self-end text-lg text-muted-foreground">
-                      vETH
+                      stPROS
                     </p>
                   </div>
                 </div>
@@ -273,13 +244,13 @@ export default function MintComponent() {
           </form.Subscribe>
           <div className="flex flex-col gap-2">
             <div className="flex flex-row gap-2 items-center text-muted-foreground">
-              1 ETH ={" "}
+              1 PHRS ={" "}
               {isLoadingVethData ? (
                 <Skeleton className="w-12 h-4" />
               ) : (
                 formatEther((vethData?.[1]?.result as bigint) ?? BigInt(0))
               )}{" "}
-              vETH
+              stPROS
             </div>
           </div>
           <form.Subscribe
