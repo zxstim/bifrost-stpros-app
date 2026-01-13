@@ -1,13 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   type BaseError,
   useWaitForTransactionReceipt,
@@ -18,28 +10,23 @@ import {
   useBalance,
   useReadContracts,
 } from "wagmi";
-import type { Token } from "@/types/token";
 import Image from "next/image";
-import { TOKEN_LIST } from "@/lib/constants";
 import { useForm } from "@tanstack/react-form";
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseEther, formatEther, Address, erc20Abi } from "viem";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { roundLongDecimals } from "@/lib/utils";
 import { Loader2, RefreshCcw } from "lucide-react";
 import { TransactionStatus } from "@/components/transaction-status";
 import { vethAbi } from "@/lib/abis";
 
-const tokens: Token[] = TOKEN_LIST;
-
 export default function MintComponent() {
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const config = useConfig();
   const chainId = useChainId();
   const { address } = useAccount();
+  // const MIN_MINT_AMOUNT = 0.0001;
 
   const {
     data: nativeBalance,
@@ -81,15 +68,12 @@ export default function MintComponent() {
       amount: "",
     },
     onSubmit: async ({ value }) => {
-      console.log(value);
-      // if (selectedToken?.symbol === "vETH") {
-      //   writeContract({
-      //     address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
-      //     abi: vethAbi,
-      //     functionName: "depositWithETH",
-      //     value: parseEther(value.amount),
-      //   });
-      // }
+      writeContract({
+        address: "0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8",
+        abi: vethAbi,
+        functionName: "depositWithETH",
+        value: parseEther(value.amount),
+      });
     },
   });
 
@@ -122,8 +106,8 @@ export default function MintComponent() {
     <div className="flex flex-col gap-4 w-full p-4 border-2 border-primary rounded-none">
       <div className="flex flex-col gap-2 pb-8">
         <div className="flex flex-row gap-2 items-center justify-between">
-        <h1 className="text-2xl font-bold">Stake ETH for vETH</h1>
-        <Button
+          <h1 className="text-2xl font-bold">Stake ETH for vETH</h1>
+          <Button
             className="hover:cursor-pointer"
             size="icon"
             variant="ghost"
@@ -203,10 +187,7 @@ export default function MintComponent() {
                       ? "Please enter an amount to mint"
                       : parseEther(value) < 0
                       ? "Amount must be greater than 0"
-                      : parseEther(value) >
-                        (selectedToken?.symbol === "vETH"
-                          ? nativeBalance?.value ?? BigInt(0)
-                          : vethData?.[0]?.result ?? BigInt(0))
+                      : parseEther(value) > (nativeBalance?.value ?? BigInt(0))
                       ? "Amount must be less than or equal to your balance"
                       : undefined,
                 }}
@@ -217,7 +198,7 @@ export default function MintComponent() {
                       <p className="text-muted-foreground">You stake</p>
                       <button
                         type="button"
-                        className="bg-transparent rounded-none border border-muted-foreground text-muted-foreground rounded-md px-2 py-0.5 hover:cursor-pointer"
+                        className="bg-transparent rounded-none border border-muted-foreground text-muted-foreground px-2 py-0.5 hover:cursor-pointer"
                       >
                         Max
                       </button>
@@ -258,25 +239,38 @@ export default function MintComponent() {
               </form.Field>
             </div>
           </div>
-          <div className="flex flex-col gap-2 rounded-none border border-muted-foreground p-4">
-            <div className="flex flex-row gap-2 items-center justify-between">
-              <p className="text-muted-foreground">You receive</p>
-            </div>
-            <div className="flex flex-row gap-2">
-              <input
-                id="receivingAmount"
-                name="receivingAmount"
-                value="0"
-                className="bg-transparent text-4xl outline-none w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                type="number"
-                placeholder="0"
-                readOnly
-              />
-              <p className="place-self-end text-lg text-muted-foreground">
-                vETH
-              </p>
-            </div>
-          </div>
+          <form.Subscribe selector={(state) => state.values.amount}>
+            {(amount) => {
+              const exchangeRate = vethData?.[1]?.result as bigint | undefined;
+              const receivingAmount =
+                amount && exchangeRate
+                  ? formatEther(
+                      (parseEther(amount) * exchangeRate) / parseEther("1")
+                    )
+                  : "";
+              return (
+                <div className="flex flex-col gap-2 rounded-none border border-muted-foreground p-4">
+                  <div className="flex flex-row gap-2 items-center justify-between">
+                    <p className="text-muted-foreground">You receive</p>
+                  </div>
+                  <div className="flex flex-row gap-2">
+                    <input
+                      id="receivingAmount"
+                      name="receivingAmount"
+                      value={receivingAmount}
+                      className="bg-transparent text-4xl outline-none w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      type="number"
+                      placeholder="0"
+                      readOnly
+                    />
+                    <p className="place-self-end text-lg text-muted-foreground">
+                      vETH
+                    </p>
+                  </div>
+                </div>
+              );
+            }}
+          </form.Subscribe>
           <div className="flex flex-col gap-2">
             <div className="flex flex-row gap-2 items-center text-muted-foreground">
               1 ETH ={" "}
@@ -296,7 +290,7 @@ export default function MintComponent() {
                 size="lg"
                 className="hover:cursor-pointer text-lg font-bold rounded-none"
                 type="submit"
-                disabled={!canSubmit || isSubmitting || isPending}
+                disabled={!canSubmit || isSubmitting || isPending || isConfirming}
               >
                 {isSubmitting || isPending ? (
                   <>
@@ -345,17 +339,5 @@ function FieldInfo({ field }: { field: AnyFieldApi }) {
       )}
       {field.state.meta.isValidating ? "Validating..." : null}
     </>
-  );
-}
-
-function SelectMintToken({ token }: { token: Token }) {
-  return (
-    <SelectItem value={token.symbol}>
-      <div className="flex flex-row gap-2 items-center justify-center">
-        <Image src={token.image} alt={token.symbol} width={24} height={24} />
-        <p className="text-lg">{token.name}</p>
-        <p className="text-lg text-muted-foreground">{token.symbol}</p>
-      </div>
-    </SelectItem>
   );
 }
